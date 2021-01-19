@@ -1,4 +1,4 @@
-package com.ongdev.media.server.controller.config;
+package com.ongdev.media.server.config;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -1,0 +1,32 @@
+package com.ongdev.media.server.exception.controller;
+
+import com.ongdev.media.server.exception.EntityCreateFailedException;
+import com.ongdev.media.server.exception.EntityDeleteFailedException;
+import com.ongdev.media.server.exception.EntityNotFoundException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+
+@ControllerAdvice
+public class ExceptionController {
+
+    @ExceptionHandler(value = EntityNotFoundException.class)
+    public ResponseEntity<Object> handleFileNotFoundException(EntityNotFoundException ex) {
+        String customEx = "Could not find\n " + ex.getMessage();
+        return new ResponseEntity<>(customEx, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(value = EntityCreateFailedException.class)
+    public ResponseEntity<Object> handleCreateFailedException(EntityCreateFailedException ex) {
+        String customEx = "Could not save\n " + ex.getMessage();
+        return new ResponseEntity<>(customEx, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(value = EntityDeleteFailedException.class)
+    public ResponseEntity<Object> handleDeleteFailedException(EntityDeleteFailedException ex) {
+        String customEx = "Could not delete\n " + ex.getMessage();
+        return new ResponseEntity<>(customEx, HttpStatus.BAD_REQUEST);
+    }
+
+}

@@ -1,17 +1,23 @@
 package com.ongdev.media.server.service.impl;
 
-import com.ongdev.media.server.controller.config.FileProperties;
-import com.ongdev.media.server.controller.exception.FileException;
-import com.ongdev.media.server.controller.exception.FileNotFoundException;
+import com.ongdev.media.server.config.FileProperties;
+import com.ongdev.media.server.controller.FileController;
+import com.ongdev.media.server.exception.EntityCreateFailedException;
+import com.ongdev.media.server.exception.EntityDeleteFailedException;
+import com.ongdev.media.server.exception.EntityNotFoundException;
 import com.ongdev.media.server.model.Image;
 import com.ongdev.media.server.model.repository.ImageRepository;
 import com.ongdev.media.server.service.FileService;
+import com.ongdev.media.server.utils.VNCharacterUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,7 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.stream.Stream;
+import java.util.UUID;
 
 @Service
 public class FileServiceImpl implements FileService {
@@ -40,7 +46,7 @@ public class FileServiceImpl implements FileService {
         try {
             Files.createDirectories(rootLocation);
         } catch (IOException ex) {
-            throw new FileException("Could not initialize", ex);
+            throw new EntityCreateFailedException("Could not initialize");
         }
     }
 
@@ -48,39 +54,36 @@ public class FileServiceImpl implements FileService {
     public Image store(MultipartFile file, String name) {
         try {
             if (file.isEmpty()) {
-                throw new FileException("Failed to store empty file");
+                throw new EntityCreateFailedException("Failed to store empty file");
             }
-
-            String renameTo = name + "." + file.getOriginalFilename()
+            String realFileName = name + "." + file.getOriginalFilename()
                     .substring(file.getOriginalFilename().lastIndexOf(".") + 1);
-
+            String handleVietnamese = VNCharacterUtils.removeAccent(realFileName);
+            if (imageRepository.existsByName(handleVietnamese)) {
+                throw new EntityCreateFailedException("Name is existed");
+            }
             Path destinationFile = this.rootLocation.resolve(
-                    Paths.get(renameTo))
+                    Paths.get(handleVietnamese))
                     .normalize().toAbsolutePath();
             if (!destinationFile.getParent().equals(this.rootLocation.toAbsolutePath())) {
-                throw new FileException("Can not store file outside current directory");
+                throw new EntityCreateFailedException("Can not store file outside current directory");
             }
             try (InputStream inputStream = file.getInputStream()) {
                 Files.copy(inputStream, destinationFile
                         , StandardCopyOption.REPLACE_EXISTING);
                 Image image = new Image();
-                image.setName(renameTo);
-                image.setLink(destinationFile.toString());
+                image.setName(handleVietnamese);
+                String link = MvcUriComponentsBuilder.fromMethodName(FileController.class,
+                        "serveFile", destinationFile.getFileName().toString())
+                        .build().toUri().toString();
+                if (imageRepository.existsByLink(link)) {
+                    throw new EntityCreateFailedException("Link is existed");
+                }
+                image.setLink(link);
                 return imageRepository.save(image);
             }
         } catch (IOException ex) {
-            throw new FileException("Failed to store file ", ex);
-        }
-    }
-
-    @Override
-    public Stream<Path> loadAll() {
-        try {
-            return Files.walk(this.rootLocation, 1)
-                    .filter(path -> !path.equals(this.rootLocation))
-                    .map(this.rootLocation::relativize);
-        } catch (IOException ex) {
-            throw new FileException("Failed to read stored files", ex);
+            throw new EntityCreateFailedException("Failed to store file ");
         }
     }
 
@@ -97,15 +100,58 @@ public class FileServiceImpl implements FileService {
             if (resource.exists() || resource.isReadable()) {
                 return resource;
             } else {
-                throw new FileNotFoundException("Could not read file " + filename);
+                throw new EntityNotFoundException("Could not read file " + filename);
             }
         } catch (MalformedURLException ex) {
-            throw new FileNotFoundException("Could not read file " + filename);
+            throw new EntityNotFoundException("Could not read file " + filename);
         }
     }
 
     @Override
     public void deleteAll() {
         FileSystemUtils.deleteRecursively(rootLocation.toFile());
+    }
+
+    @Override
+    public Page<Image> getAllFiles(Pageable pageable) {
+        return imageRepository.findAll(pageable);
+    }
+
+    @Override
+    public Image getFileById(String id) {
+        return imageRepository.findById(UUID.fromString(id))
+                .orElseThrow(EntityNotFoundException::new);
+    }
+
+    @Override
+    public Image getFileByLink(String link) {
+        return imageRepository.findByLink(link)
+                .orElseThrow(EntityNotFoundException::new);
+    }
+
+    @Override
+    public Image getFileByName(String name) {
+        return imageRepository.findByName(name)
+                .orElseThrow(EntityNotFoundException::new);
+    }
+
+    @Override
+    public Image updateFileById(String id) {
+        Image image = imageRepository.findById(UUID.fromString(id))
+                .orElseThrow(EntityNotFoundException::new);
+        return image;
+    }
+
+    @Override
+    public void deleteFileById(String id) {
+        Image image = imageRepository.findById(UUID.fromString(id))
+                .orElseThrow(EntityNotFoundException::new);
+        Path path = Paths.get(image.getLink());
+        try {
+            Files.delete(path);
+            imageRepository.deleteById(UUID.fromString(id));
+        } catch (IOException | IllegalArgumentException ex) {
+            throw new EntityDeleteFailedException(ex.getMessage());
+        }
     }
 }

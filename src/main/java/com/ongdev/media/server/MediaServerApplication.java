@@ -1,6 +1,6 @@
 package com.ongdev.media.server;
 
-import com.ongdev.media.server.controller.config.FileProperties;
+import com.ongdev.media.server.config.FileProperties;
 import com.ongdev.media.server.service.FileService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;

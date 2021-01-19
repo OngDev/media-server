@@ -20,9 +20,9 @@ public class Image {
     @Column(name = "id")
     private UUID id;
 
-    @Column(name = "name", unique = true)
+    @Column(name = "name", unique = true, length = 100)
     private String name;
 
-    @Column(name = "link", unique = true)
+    @Column(name = "link", unique = true, length = 150)
     private String link;
 }
