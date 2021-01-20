@@ -3,6 +3,7 @@ package com.ongdev.media.server.model;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -16,8 +17,9 @@ import java.util.UUID;
 @AllArgsConstructor
 public class Image {
     @Id
-    @GeneratedValue
-    @Column(name = "id")
+    @GenericGenerator(name = "uuid", strategy = "uuid2")
+    @GeneratedValue(generator = "uuid")
+    @Column(name = "id", unique = true, nullable = false, updatable = false, columnDefinition = "BINARY(16)")
     private UUID id;
 
     @Column(name = "name", unique = true, length = 100)
@@ -25,4 +27,7 @@ public class Image {
 
     @Column(name = "link", unique = true, length = 150)
     private String link;
+
+    @Column(name = "category", length = 10)
+    private String category;
 }

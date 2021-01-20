@@ -1,9 +1,6 @@
 package com.ongdev.media.server.service.impl;
 
-import com.ongdev.media.server.config.FileProperties;
-import com.ongdev.media.server.exception.EntityCreateFailedException;
-import com.ongdev.media.server.exception.EntityDeleteFailedException;
-import com.ongdev.media.server.exception.EntityNotFoundException;
+import com.ongdev.media.server.exception.*;
 import com.ongdev.media.server.model.Image;
 import com.ongdev.media.server.model.repository.ImageRepository;
 import com.ongdev.media.server.service.FileService;
@@ -31,32 +28,18 @@ public class FileServiceImpl implements FileService {
 
     private final ImageRepository imageRepository;
 
-    private final Path rootLocation;
+    private final Path rootLocation = Paths.get("archive");
 
     @Autowired
-    public FileServiceImpl(FileProperties fileProperties, ImageRepository imageRepository) {
-        this.rootLocation = Paths.get(fileProperties.getLocation());
+    public FileServiceImpl(ImageRepository imageRepository) {
         this.imageRepository = imageRepository;
     }
 
     @Override
-    public void init() {
-        try {
-            Files.createDirectories(rootLocation);
-        } catch (IOException ex) {
-            throw new EntityCreateFailedException("Could not initialize");
-        }
-    }
-
-    @Override
-    public Image store(MultipartFile file, String name, Image image) {
+    public Image store(MultipartFile file, String fullFileName, String category, Image imageResponse) {
         try {
             if (file.isEmpty()) {
                 throw new EntityCreateFailedException("Failed to store empty file");
-            }
-            String fullFileName = MapperUtils.toFullNameFile(file, name);
-            if (imageRepository.existsByName(fullFileName)) {
-                throw new EntityCreateFailedException("Name is existed");
             }
             Path destinationFile = MapperUtils.toDestinationFile(fullFileName, this.rootLocation);
             if (!destinationFile.getParent().equals(this.rootLocation.toAbsolutePath())) {
@@ -64,13 +47,17 @@ public class FileServiceImpl implements FileService {
             }
             try (InputStream inputStream = file.getInputStream()) {
                 Files.copy(inputStream, destinationFile, StandardCopyOption.REPLACE_EXISTING);
-                image.setName(fullFileName);
-                String link = MapperUtils.toLink(destinationFile);
-                if (imageRepository.existsByLink(link)) {
-                    throw new EntityCreateFailedException("Link is existed");
+                boolean canResize = MapperUtils.canResize(this.rootLocation, fullFileName, category);
+                if (!canResize) {
+                    String path = MapperUtils.toAbsolutePath(rootLocation, fullFileName);
+                    Files.delete(Paths.get(path));
+                    throw new CouldNotResizeException("Category is not valid\nThere are three categories: profile, cover and link");
                 }
-                image.setLink(link);
-                return imageRepository.save(image);
+                imageResponse.setName(fullFileName);
+                imageResponse.setCategory(category);
+                String link = MapperUtils.toLink(destinationFile);
+                imageResponse.setLink(link);
+                return imageRepository.save(imageResponse);
             }
         } catch (IOException ex) {
             throw new EntityCreateFailedException("Failed to store file ");
@@ -98,13 +85,23 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public Image saveImage(MultipartFile file, String name) {
-        return store(file, name, new Image());
+    public Image addImage(MultipartFile file, String name, String category) {
+        Image imageResponse = new Image();
+        String fullFileName = MapperUtils.toFullFileName(file, name);
+        if (imageRepository.existsByName(fullFileName)) {
+            throw new EntityCreateFailedException("Name is existed");
+        }
+        return store(file, fullFileName, category, imageResponse);
     }
 
     @Override
     public void deleteAll() {
-        FileSystemUtils.deleteRecursively(rootLocation.toFile());
+        try {
+            FileSystemUtils.deleteRecursively(rootLocation.toFile());
+            Files.createDirectory(rootLocation);
+        } catch (IOException ex) {
+            throw new EntityDeleteFailedException(ex.getMessage());
+        }
     }
 
     @Override
@@ -131,11 +128,21 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public Image updateFileById(MultipartFile file, String name, String id) {
-        Image image = imageRepository.findById(UUID.fromString(id))
+    public Image updateFileById(MultipartFile file, String name, String category, String id) {
+        Image imageEntity = imageRepository.findById(UUID.fromString(id))
                 .orElseThrow(EntityNotFoundException::new);
-        deleteFileById(id);
-        return store(file, name, image);
+        String fullFileName = MapperUtils.toFullFileName(file, name);
+        if (!imageEntity.getName().equals(fullFileName) && imageRepository.existsByName(fullFileName)) {
+            throw new EntityUpdateFailedException("Name is existed");
+        }
+        String path = MapperUtils.toAbsolutePath(rootLocation, imageEntity.getName());
+        Image imageResponse = store(file, fullFileName, category, imageEntity);
+        try {
+            Files.delete(Paths.get(path));
+            return imageResponse;
+        } catch (IOException ex) {
+            throw new EntityDeleteFailedException(ex.getMessage());
+        }
     }
 
     @Override

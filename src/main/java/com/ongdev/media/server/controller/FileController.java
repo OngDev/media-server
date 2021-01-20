@@ -24,7 +24,7 @@ public class FileController {
         this.fileService = fileService;
     }
 
-    @GetMapping("{filename:.+}")
+    @GetMapping("filename/{filename:.+}")
     @ResponseBody
     public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
         Resource file = fileService.loadAsResource(filename);
@@ -35,8 +35,10 @@ public class FileController {
     @PostMapping
     public ResponseEntity<Image> handleFileUpload(
             @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "name") String name) {
-        return new ResponseEntity<>(fileService.saveImage(file, name), HttpStatus.OK);
+            @RequestParam("name") String name,
+            @RequestParam("category") String category
+    ) {
+        return new ResponseEntity<>(fileService.addImage(file, name, category), HttpStatus.OK);
     }
 
     @GetMapping
@@ -50,9 +52,10 @@ public class FileController {
     public ResponseEntity<Image> updateFileById(
             @PathVariable String id,
             @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "name") String name
+            @RequestParam("name") String name,
+            @RequestParam("category") String category
     ) {
-        return new ResponseEntity<>(fileService.updateFileById(file, name, id), HttpStatus.OK);
+        return new ResponseEntity<>(fileService.updateFileById(file, name, category, id), HttpStatus.OK);
     }
 
     @DeleteMapping("{id}")
@@ -61,8 +64,14 @@ public class FileController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @GetMapping("id")
-    public ResponseEntity<Image> getFileById(@RequestParam String id) {
+    @DeleteMapping
+    public ResponseEntity deleteAllFiles() {
+        fileService.deleteAll();
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @GetMapping("{id}")
+    public ResponseEntity<Image> getFileById(@PathVariable String id) {
         return new ResponseEntity<>(fileService.getFileById(id), HttpStatus.OK);
     }
 

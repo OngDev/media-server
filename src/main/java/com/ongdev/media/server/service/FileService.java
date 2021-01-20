@@ -10,15 +10,13 @@ import java.nio.file.Path;
 
 public interface FileService {
 
-    void init();
-
-    Image store(MultipartFile file, String name, Image image);
+    Image store(MultipartFile file, String fullFileName, String category, Image imageResponse);
 
     Path load(String filename);
 
     Resource loadAsResource(String filename);
 
-    Image saveImage(MultipartFile file, String name);
+    Image addImage(MultipartFile file, String name, String category);
 
     void deleteAll();
 
@@ -30,7 +28,7 @@ public interface FileService {
 
     Image getFileByName(String name);
 
-    Image updateFileById(MultipartFile file, String name, String id);
+    Image updateFileById(MultipartFile file, String name, String category, String id);
 
     void deleteFileById(String id);
 }
