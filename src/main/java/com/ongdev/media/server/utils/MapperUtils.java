@@ -1,6 +1,6 @@
 package com.ongdev.media.server.utils;
 
-import com.ongdev.media.server.controller.FileController;
+import com.ongdev.media.server.controller.ImageController;
 import com.ongdev.media.server.exception.CouldNotResizeException;
 import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,7 +26,7 @@ public class MapperUtils {
     }
 
     public static String toLink(Path destinationFile) {
-        return MvcUriComponentsBuilder.fromMethodName(FileController.class,
+        return MvcUriComponentsBuilder.fromMethodName(ImageController.class,
                 "serveFile", destinationFile.getFileName().toString())
                 .build().toUri().toString();
     }

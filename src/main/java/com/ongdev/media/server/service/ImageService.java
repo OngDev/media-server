@@ -8,7 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Path;
 
-public interface FileService {
+public interface ImageService {
 
     Image store(MultipartFile file, String fullFileName, String category, Image imageResponse);
 

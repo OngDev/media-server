@@ -1,7 +1,7 @@
 package com.ongdev.media.server.controller;
 
 import com.ongdev.media.server.model.Image;
-import com.ongdev.media.server.service.FileService;
+import com.ongdev.media.server.service.ImageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -15,19 +15,19 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("files")
-public class FileController {
+public class ImageController {
 
-    private final FileService fileService;
+    private final ImageService imageService;
 
     @Autowired
-    public FileController(FileService fileService) {
-        this.fileService = fileService;
+    public ImageController(ImageService imageService) {
+        this.imageService = imageService;
     }
 
     @GetMapping("filename/{filename:.+}")
     @ResponseBody
     public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
-        Resource file = fileService.loadAsResource(filename);
+        Resource file = imageService.loadAsResource(filename);
         return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,
                 "attachment; filename=\"" + file.getFilename() + "\"").body(file);
     }
@@ -38,14 +38,14 @@ public class FileController {
             @RequestParam("name") String name,
             @RequestParam("category") String category
     ) {
-        return new ResponseEntity<>(fileService.addImage(file, name, category), HttpStatus.OK);
+        return new ResponseEntity<>(imageService.addImage(file, name, category), HttpStatus.OK);
     }
 
     @GetMapping
     public ResponseEntity<Page<Image>> getAllFiles(
             @PageableDefault(sort = {"name"}) Pageable pageable
     ) {
-        return new ResponseEntity<>(fileService.getAllFiles(pageable), HttpStatus.OK);
+        return new ResponseEntity<>(imageService.getAllFiles(pageable), HttpStatus.OK);
     }
 
     @PutMapping("{id}")
@@ -55,33 +55,33 @@ public class FileController {
             @RequestParam("name") String name,
             @RequestParam("category") String category
     ) {
-        return new ResponseEntity<>(fileService.updateFileById(file, name, category, id), HttpStatus.OK);
+        return new ResponseEntity<>(imageService.updateFileById(file, name, category, id), HttpStatus.OK);
     }
 
     @DeleteMapping("{id}")
     public ResponseEntity deleteFileById(@PathVariable String id) {
-        fileService.deleteFileById(id);
+        imageService.deleteFileById(id);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @DeleteMapping
     public ResponseEntity deleteAllFiles() {
-        fileService.deleteAll();
+        imageService.deleteAll();
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @GetMapping("{id}")
     public ResponseEntity<Image> getFileById(@PathVariable String id) {
-        return new ResponseEntity<>(fileService.getFileById(id), HttpStatus.OK);
+        return new ResponseEntity<>(imageService.getFileById(id), HttpStatus.OK);
     }
 
     @GetMapping("link")
     public ResponseEntity<Image> getFileByLink(@RequestParam String link) {
-        return new ResponseEntity<>(fileService.getFileByLink(link), HttpStatus.OK);
+        return new ResponseEntity<>(imageService.getFileByLink(link), HttpStatus.OK);
     }
 
     @GetMapping("name")
     public ResponseEntity<Image> getFileByName(@RequestParam String name) {
-        return new ResponseEntity<>(fileService.getFileByName(name), HttpStatus.OK);
+        return new ResponseEntity<>(imageService.getFileByName(name), HttpStatus.OK);
     }
 }

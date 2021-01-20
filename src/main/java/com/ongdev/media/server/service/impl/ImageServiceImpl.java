@@ -3,7 +3,7 @@ package com.ongdev.media.server.service.impl;
 import com.ongdev.media.server.exception.*;
 import com.ongdev.media.server.model.Image;
 import com.ongdev.media.server.model.repository.ImageRepository;
-import com.ongdev.media.server.service.FileService;
+import com.ongdev.media.server.service.ImageService;
 import com.ongdev.media.server.utils.MapperUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -24,14 +24,14 @@ import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
 @Service
-public class FileServiceImpl implements FileService {
+public class ImageServiceImpl implements ImageService {
 
     private final ImageRepository imageRepository;
 
     private final Path rootLocation = Paths.get("archive");
 
     @Autowired
-    public FileServiceImpl(ImageRepository imageRepository) {
+    public ImageServiceImpl(ImageRepository imageRepository) {
         this.imageRepository = imageRepository;
     }
 
