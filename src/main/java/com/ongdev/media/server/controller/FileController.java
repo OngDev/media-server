@@ -36,7 +36,7 @@ public class FileController {
     public ResponseEntity<Image> handleFileUpload(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "name") String name) {
-        return new ResponseEntity<>(fileService.store(file, name), HttpStatus.OK);
+        return new ResponseEntity<>(fileService.saveImage(file, name), HttpStatus.OK);
     }
 
     @GetMapping
@@ -47,8 +47,12 @@ public class FileController {
     }
 
     @PutMapping("{id}")
-    public ResponseEntity<Image> updateFileById(@PathVariable String id) {
-        return new ResponseEntity<>(fileService.updateFileById(id), HttpStatus.OK);
+    public ResponseEntity<Image> updateFileById(
+            @PathVariable String id,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "name") String name
+    ) {
+        return new ResponseEntity<>(fileService.updateFileById(file, name, id), HttpStatus.OK);
     }
 
     @DeleteMapping("{id}")
@@ -71,17 +75,4 @@ public class FileController {
     public ResponseEntity<Image> getFileByName(@RequestParam String name) {
         return new ResponseEntity<>(fileService.getFileByName(name), HttpStatus.OK);
     }
-
-    //    @GetMapping
-//    public ResponseEntity<List<Object>> listUploadedFiles() {
-//
-//        Object[] fileName = fileService.loadAll().map(
-//                path -> MvcUriComponentsBuilder.fromMethodName(FileController.class,
-//                        "serveFile", path.getFileName().toString()).build().toUri().toString())
-//                .toArray();
-//
-//        List<Object> toResponse = Arrays.asList(fileName);
-//        return ResponseEntity.ok(toResponse);
-//    }
-//
 }

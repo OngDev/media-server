@@ -12,11 +12,13 @@ public interface FileService {
 
     void init();
 
-    Image store(MultipartFile file, String name);
+    Image store(MultipartFile file, String name, Image image);
 
     Path load(String filename);
 
     Resource loadAsResource(String filename);
+
+    Image saveImage(MultipartFile file, String name);
 
     void deleteAll();
 
@@ -28,7 +30,7 @@ public interface FileService {
 
     Image getFileByName(String name);
 
-    Image updateFileById(String id);
+    Image updateFileById(MultipartFile file, String name, String id);
 
     void deleteFileById(String id);
 }
