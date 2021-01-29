@@ -25,9 +25,15 @@ public class MapperUtils {
         return VNCharacterUtils.removeAccent(realFileName);
     }
 
-    public static String toLink(Path destinationFile) {
+    public static String toLinkDownload(Path destinationFile) {
         return MvcUriComponentsBuilder.fromMethodName(ImageController.class,
-                "serveFile", destinationFile.getFileName().toString())
+                "downloadImageByName", destinationFile.getFileName().toString())
+                .build().toUri().toString();
+    }
+
+    public static String toLinkDisplay(Path destinationFile) {
+        return MvcUriComponentsBuilder.fromMethodName(ImageController.class,
+                "displayImageByName", destinationFile.getFileName().toString())
                 .build().toUri().toString();
     }
 

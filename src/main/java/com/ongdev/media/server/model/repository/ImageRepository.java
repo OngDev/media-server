@@ -10,7 +10,10 @@ import java.util.UUID;
 @Repository
 public interface ImageRepository extends JpaRepository<Image, UUID> {
     Optional<Image> findByName(String name);
-    Optional<Image> findByLink(String link);
+
+    Optional<Image> findByLinkDisplay(String link_display);
+
+    Optional<Image> findByLinkDownload(String link_download);
+
     Boolean existsByName(String name);
-    Boolean existsByLink(String link);
 }

@@ -39,4 +39,10 @@ public class ExceptionController {
         return new ResponseEntity<>(customEx, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(value = CouldNotShowImage.class)
+    public ResponseEntity<Object> handleCouldNotShowImageException(CouldNotShowImage ex) {
+        String customEx = "Could not show image\n " + ex.getMessage();
+        return new ResponseEntity<>(customEx, HttpStatus.BAD_REQUEST);
+    }
+
 }

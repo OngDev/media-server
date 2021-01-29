@@ -55,8 +55,10 @@ public class ImageServiceImpl implements ImageService {
                 }
                 imageResponse.setName(fullFileName);
                 imageResponse.setCategory(category);
-                String link = MapperUtils.toLink(destinationFile);
-                imageResponse.setLink(link);
+                String linkDownload = MapperUtils.toLinkDownload(destinationFile);
+                imageResponse.setLinkDownload(linkDownload);
+                String linkDisplay = MapperUtils.toLinkDisplay(destinationFile);
+                imageResponse.setLinkDisplay(linkDisplay);
                 return imageRepository.save(imageResponse);
             }
         } catch (IOException ex) {
@@ -85,7 +87,7 @@ public class ImageServiceImpl implements ImageService {
     }
 
     @Override
-    public Image addImage(MultipartFile file, String name, String category) {
+    public Image saveImage(MultipartFile file, String name, String category) {
         Image imageResponse = new Image();
         String fullFileName = MapperUtils.toFullFileName(file, name);
         if (imageRepository.existsByName(fullFileName)) {
@@ -95,7 +97,7 @@ public class ImageServiceImpl implements ImageService {
     }
 
     @Override
-    public void deleteAll() {
+    public void deleteAllImages() {
         try {
             FileSystemUtils.deleteRecursively(rootLocation.toFile());
             Files.createDirectory(rootLocation);
@@ -110,19 +112,25 @@ public class ImageServiceImpl implements ImageService {
     }
 
     @Override
-    public Image getFileById(String id) {
+    public Image getImageById(String id) {
         return imageRepository.findById(UUID.fromString(id))
                 .orElseThrow(EntityNotFoundException::new);
     }
 
     @Override
-    public Image getFileByLink(String link) {
-        return imageRepository.findByLink(link)
+    public Image getImageByLinkDownload(String link) {
+        return imageRepository.findByLinkDownload(link)
                 .orElseThrow(EntityNotFoundException::new);
     }
 
     @Override
-    public Image getFileByName(String name) {
+    public Image getImageByLinkDisplay(String link) {
+        return imageRepository.findByLinkDisplay(link)
+                .orElseThrow(EntityNotFoundException::new);
+    }
+
+    @Override
+    public Image getImageByName(String name) {
         return imageRepository.findByName(name)
                 .orElseThrow(EntityNotFoundException::new);
     }
@@ -146,7 +154,7 @@ public class ImageServiceImpl implements ImageService {
     }
 
     @Override
-    public void deleteFileById(String id) {
+    public void deleteImageById(String id) {
         Image image = imageRepository.findById(UUID.fromString(id))
                 .orElseThrow(EntityNotFoundException::new);
         String path = MapperUtils.toAbsolutePath(rootLocation, image.getName());
@@ -155,6 +163,20 @@ public class ImageServiceImpl implements ImageService {
             imageRepository.deleteById(UUID.fromString(id));
         } catch (IOException | IllegalArgumentException ex) {
             throw new EntityDeleteFailedException(ex.getMessage());
+        }
+    }
+
+    @Override
+    public byte[] displayImageByName(String name) {
+        if (imageRepository.existsByName(name)) {
+            Path path = MapperUtils.toDestinationFile(name, rootLocation);
+            try {
+                return Files.readAllBytes(path);
+            } catch (IOException ex) {
+                throw new CouldNotShowImage(ex.getMessage());
+            }
+        } else {
+            throw new EntityNotFoundException();
         }
     }
 }

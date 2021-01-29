@@ -16,19 +16,23 @@ public interface ImageService {
 
     Resource loadAsResource(String filename);
 
-    Image addImage(MultipartFile file, String name, String category);
+    Image saveImage(MultipartFile file, String name, String category);
 
-    void deleteAll();
+    void deleteAllImages();
 
     Page<Image> getAllFiles(Pageable pageable);
 
-    Image getFileById(String id);
+    Image getImageById(String id);
 
-    Image getFileByLink(String link);
+    Image getImageByLinkDownload(String link);
 
-    Image getFileByName(String name);
+    Image getImageByLinkDisplay(String link);
+
+    Image getImageByName(String name);
 
     Image updateFileById(MultipartFile file, String name, String category, String id);
 
-    void deleteFileById(String id);
+    void deleteImageById(String id);
+
+    byte[] displayImageByName(String name);
 }
